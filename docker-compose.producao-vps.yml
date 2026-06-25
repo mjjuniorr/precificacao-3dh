@@ -1,66 +1,64 @@
 services:
-  db:
+  precificacao-db:
     image: postgres:16-alpine
+    networks:
+      - PortainerRede
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB:-precificacao}
+      POSTGRES_USER: ${POSTGRES_USER:-precificacao}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - precificacao_pgdata:/var/lib/postgresql/data
-    networks:
-      - precificacao_internal
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
 
-  api:
-    image: ghcr.io/mjjuniorr/precificacao-nfe-api:${IMAGE_TAG:-latest}
+  precificacao-api:
+    image: ${API_IMAGE}
+    networks:
+      - PortainerRede
     environment:
       API_PORT: 4000
-      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      CORS_ORIGIN: https://${PRECIFICACAO_HOST:-precificacao.3dhmanaus.shop}
-      OIDC_ISSUER: https://${AUTH_HOST:-auth.3dhmanaus.shop}/realms/3dh
-      OIDC_JWKS_URL: http://portal-keycloak:8080/realms/3dh/protocol/openid-connect/certs
-      OIDC_CLIENT_ID: precificacao-web
-      OIDC_AUDIENCE: precificacao-web
-      PORTAL_URL: https://${PORTAL_HOST:-portal.3dhmanaus.shop}
-    networks:
-      - precificacao_internal
-      - PortainerRede
-    depends_on:
-      - db
+      DATABASE_URL: postgres://${POSTGRES_USER:-precificacao}:${POSTGRES_PASSWORD}@precificacao-db:5432/${POSTGRES_DB:-precificacao}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://precificacao.3dhmanaus.shop}
+      AUTH_MODE: oidc
+      OIDC_ISSUER: ${OIDC_ISSUER:-https://auth.3dhmanaus.shop/realms/3dh}
+      OIDC_JWKS_URL: ${OIDC_JWKS_URL:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-precificacao-web}
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE:-precificacao-web}
+      PORTAL_URL: ${PORTAL_URL:-https://portal.3dhmanaus.shop}
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
 
-  web:
-    image: ghcr.io/mjjuniorr/precificacao-nfe-web:${IMAGE_TAG:-latest}
+  precificacao-web:
+    image: ${APP_IMAGE}
     networks:
-      - precificacao_internal
       - PortainerRede
-    depends_on:
-      - api
     deploy:
-      replicas: 1
+      replicas: ${APP_REPLICAS:-1}
       restart_policy:
         condition: on-failure
       labels:
         - traefik.enable=true
         - traefik.docker.network=PortainerRede
-        - traefik.http.routers.precificacao-nfe.rule=Host(`${PRECIFICACAO_HOST:-precificacao.3dhmanaus.shop}`)
-        - traefik.http.routers.precificacao-nfe.entrypoints=${TRAEFIK_ENTRYPOINTS:-websecure}
-        - traefik.http.routers.precificacao-nfe.tls=true
-        - traefik.http.routers.precificacao-nfe.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencryptresolver}
-        - traefik.http.services.precificacao-nfe.loadbalancer.server.port=80
+        - traefik.http.routers.precificacao_3dh_app.rule=Host(`${APP_HOST:-precificacao.3dhmanaus.shop}`)
+        - traefik.http.routers.precificacao_3dh_app.entrypoints=${TRAEFIK_ENTRYPOINTS:-websecure}
+        - traefik.http.routers.precificacao_3dh_app.tls=true
+        - traefik.http.routers.precificacao_3dh_app.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencryptresolver}
+        - traefik.http.routers.precificacao_3dh_app.priority=${TRAEFIK_PRIORITY:-1}
+        - traefik.http.routers.precificacao_3dh_app.service=precificacao_3dh_app
+        - traefik.http.routers.precificacao_3dh_app.middlewares=precificacao_sslheader
+        - traefik.http.services.precificacao_3dh_app.loadbalancer.server.port=80
+        - traefik.http.services.precificacao_3dh_app.loadbalancer.passHostHeader=true
+        - traefik.http.middlewares.precificacao_sslheader.headers.customrequestheaders.X-Forwarded-Proto=https
 
 volumes:
   precificacao_pgdata:
 
 networks:
-  precificacao_internal:
-    driver: overlay
   PortainerRede:
     external: true
     name: PortainerRede

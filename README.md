@@ -26,6 +26,19 @@ O frontend usa Authorization Code com PKCE e guarda a sessao somente em `session
 
 Importacoes, alteracoes, exportacoes e exclusoes administrativas geram registros de auditoria com o identificador e o nome do usuario.
 
+## Producao
+
+A stack segue o padrao da infraestrutura 3DH:
+
+- Docker Swarm administrado pelo Portainer;
+- rede externa `PortainerRede`;
+- Traefik com TLS em `precificacao.3dhmanaus.shop`;
+- imagens GHCR informadas por `APP_IMAGE` e `API_IMAGE`;
+- tags imutaveis baseadas no commit;
+- login central em `https://auth.3dhmanaus.shop/realms/3dh`.
+
+Consulte `docs/deploy-portainer.md` para as variaveis e o procedimento completo.
+
 ## Estrutura
 
 - `frontend/`: React, TypeScript, TailwindCSS e Nginx.
