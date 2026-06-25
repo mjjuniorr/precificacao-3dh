@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.log
+backend/dist/
+frontend/dist/
+work/
+tmp/
+*.xml
+*.xls
+*.xlsx
+*.csv
+*.zip
+.DS_Store
+Thumbs.db

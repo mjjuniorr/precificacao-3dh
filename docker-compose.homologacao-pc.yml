@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-precificacao}
+      POSTGRES_USER: ${POSTGRES_USER:-precificacao}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-precificacao_dev}
+    volumes:
+      - precificacao_pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+    environment:
+      API_PORT: 4000
+      DATABASE_URL: postgres://${POSTGRES_USER:-precificacao}:${POSTGRES_PASSWORD:-precificacao_dev}@db:5432/${POSTGRES_DB:-precificacao}
+      CORS_ORIGIN: "*"
+      OIDC_ISSUER: ${OIDC_ISSUER:-http://localhost:8080/realms/3dh}
+      OIDC_JWKS_URL: ${OIDC_JWKS_URL:-http://host.docker.internal:8080/realms/3dh/protocol/openid-connect/certs}
+      OIDC_CLIENT_ID: precificacao-web
+      OIDC_AUDIENCE: precificacao-web
+      PORTAL_URL: ${PORTAL_URL:-http://localhost:4180}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-4000}:4000"
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: "."
+    depends_on:
+      - api
+    ports:
+      - "${FRONTEND_PORT:-8796}:80"
+
+volumes:
+  precificacao_pgdata:
