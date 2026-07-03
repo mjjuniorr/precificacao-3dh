@@ -8,15 +8,16 @@ O workflow `Publish Docker images` roda a cada push na branch `main` e publica:
 - `ghcr.io/mjjuniorr/precificacao-nfe-web:TAG_DO_COMMIT`
 
 A tag corresponde aos sete primeiros caracteres do commit. O workflow tambem
-publica `latest`, mas a stack de producao deve usar a tag imutavel.
+publica `latest`, mas a stack de producao usa as imagens homologadas:
+
+- `ghcr.io/mjjuniorr/precificacao-nfe-api:92cd74f`
+- `ghcr.io/mjjuniorr/precificacao-nfe-web:92cd74f`
 
 ## Variaveis da stack
 
 Configure no Portainer:
 
 ```env
-APP_IMAGE=ghcr.io/mjjuniorr/precificacao-nfe-web:TAG_DO_COMMIT
-API_IMAGE=ghcr.io/mjjuniorr/precificacao-nfe-api:TAG_DO_COMMIT
 APP_HOST=precificacao.3dhmanaus.com.br
 APP_REPLICAS=1
 

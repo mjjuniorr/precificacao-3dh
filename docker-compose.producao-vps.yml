@@ -15,7 +15,7 @@ services:
         condition: on-failure
 
   precificacao-api:
-    image: ${API_IMAGE}
+    image: ghcr.io/mjjuniorr/precificacao-nfe-api:92cd74f
     networks:
       - PortainerRede
     environment:
@@ -36,7 +36,7 @@ services:
         condition: on-failure
 
   precificacao-web:
-    image: ${APP_IMAGE}
+    image: ghcr.io/mjjuniorr/precificacao-nfe-web:92cd74f
     networks:
       - PortainerRede
     deploy:
