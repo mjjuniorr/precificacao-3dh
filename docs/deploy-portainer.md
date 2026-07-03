@@ -17,14 +17,14 @@ Configure no Portainer:
 ```env
 APP_IMAGE=ghcr.io/mjjuniorr/precificacao-nfe-web:TAG_DO_COMMIT
 API_IMAGE=ghcr.io/mjjuniorr/precificacao-nfe-api:TAG_DO_COMMIT
-APP_HOST=precificacao.3dhmanaus.shop
+APP_HOST=precificacao.3dhmanaus.com.br
 APP_REPLICAS=1
 
 POSTGRES_DB=precificacao
 POSTGRES_USER=precificacao
 POSTGRES_PASSWORD=senha-forte-do-banco
 
-CORS_ORIGIN=https://precificacao.3dhmanaus.shop
+CORS_ORIGIN=https://precificacao.3dhmanaus.com.br
 AUTH_MODE=oidc
 OIDC_ISSUER=https://auth.3dhmanaus.shop/realms/3dh
 OIDC_JWKS_URL=
@@ -56,7 +56,7 @@ Somente `precificacao-web` e publicado. As labels seguem o padrao da VPS:
 
 - `traefik.enable=true`
 - `traefik.docker.network=PortainerRede`
-- router para `precificacao.3dhmanaus.shop`
+- router para `precificacao.3dhmanaus.com.br`
 - TLS com o certresolver do ambiente
 - middleware `precificacao_sslheader`
 - `passHostHeader=true`
@@ -70,8 +70,8 @@ Antes do deploy, o Keycloak de producao precisa possuir:
 
 - cliente publico `precificacao-web`;
 - Authorization Code ativado e PKCE `S256`;
-- redirect e logout `https://precificacao.3dhmanaus.shop/*`;
-- origem web `https://precificacao.3dhmanaus.shop`;
+- redirect e logout `https://precificacao.3dhmanaus.com.br/*`;
+- origem web `https://precificacao.3dhmanaus.com.br`;
 - audience mapper `precificacao-web`;
 - roles `precificacao:view`, `precificacao:import`, `precificacao:edit`,
   `precificacao:export` e `precificacao:admin`.

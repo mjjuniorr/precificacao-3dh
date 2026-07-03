@@ -32,7 +32,7 @@ A stack segue o padrao da infraestrutura 3DH:
 
 - Docker Swarm administrado pelo Portainer;
 - rede externa `PortainerRede`;
-- Traefik com TLS em `precificacao.3dhmanaus.shop`;
+- Traefik com TLS em `precificacao.3dhmanaus.com.br`;
 - imagens GHCR informadas por `APP_IMAGE` e `API_IMAGE`;
 - tags imutaveis baseadas no commit;
 - login central em `https://auth.3dhmanaus.shop/realms/3dh`.

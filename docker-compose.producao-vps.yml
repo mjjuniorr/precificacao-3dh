@@ -21,7 +21,7 @@ services:
     environment:
       API_PORT: 4000
       DATABASE_URL: postgres://${POSTGRES_USER:-precificacao}:${POSTGRES_PASSWORD}@precificacao-db:5432/${POSTGRES_DB:-precificacao}
-      CORS_ORIGIN: ${CORS_ORIGIN:-https://precificacao.3dhmanaus.shop}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://precificacao.3dhmanaus.com.br}
       AUTH_MODE: oidc
       OIDC_ISSUER: ${OIDC_ISSUER:-https://auth.3dhmanaus.shop/realms/3dh}
       OIDC_JWKS_URL: ${OIDC_JWKS_URL:-}
@@ -44,7 +44,7 @@ services:
       labels:
         - traefik.enable=true
         - traefik.docker.network=PortainerRede
-        - traefik.http.routers.precificacao_3dh_app.rule=Host(`${APP_HOST:-precificacao.3dhmanaus.shop}`)
+        - traefik.http.routers.precificacao_3dh_app.rule=Host(`${APP_HOST:-precificacao.3dhmanaus.com.br}`)
         - traefik.http.routers.precificacao_3dh_app.entrypoints=${TRAEFIK_ENTRYPOINTS:-websecure}
         - traefik.http.routers.precificacao_3dh_app.tls=true
         - traefik.http.routers.precificacao_3dh_app.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencryptresolver}

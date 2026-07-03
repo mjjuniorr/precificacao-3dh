@@ -31,4 +31,4 @@
 - Docker Compose para homologacao local.
 - Stack Docker Swarm para Portainer.
 - Traefik usando a rede externa `PortainerRede`.
-- Dominio previsto: `precificacao.3dhmanaus.shop`.
+- Dominio previsto: `precificacao.3dhmanaus.com.br`.
