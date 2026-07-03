@@ -1,8 +1,28 @@
 export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 let accessToken = "";
+const LEGACY_TOKEN_KEY = "precificacao.legacy_token";
+let unauthorizedHandler: (() => void) | null = null;
 
 export function setAccessToken(token: string) {
   accessToken = token;
+}
+
+export function clearAccessToken() {
+  accessToken = "";
+  sessionStorage.removeItem(LEGACY_TOKEN_KEY);
+}
+
+export function storeLegacyToken(token: string) {
+  sessionStorage.setItem(LEGACY_TOKEN_KEY, token);
+  setAccessToken(token);
+}
+
+export function restoreLegacyToken() {
+  return sessionStorage.getItem(LEGACY_TOKEN_KEY) || "";
+}
+
+export function setUnauthorizedHandler(handler: () => void) {
+  unauthorizedHandler = handler;
 }
 
 export type PricingItem = {
@@ -61,6 +81,7 @@ export type SessionUser = {
   name: string;
   email: string;
   permissions: string[];
+  source: "oidc" | "legacy";
 };
 
 export class ApiError extends Error {
@@ -85,6 +106,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
+    if (response.status === 401) unauthorizedHandler?.();
     throw new ApiError(response.status, body);
   }
   return response.json();

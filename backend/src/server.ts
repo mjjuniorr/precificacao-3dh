@@ -4,7 +4,7 @@ import express from "express";
 import multer from "multer";
 import { config } from "./config.js";
 import { pool, migrate } from "./db.js";
-import { requireAuth, requirePermission, type AuthUser } from "./auth.js";
+import { createLegacyToken, requireAuth, requirePermission, type AuthUser } from "./auth.js";
 import { parseNfeXml } from "./nfe.js";
 import { mapItem } from "./pricing.js";
 
@@ -18,11 +18,21 @@ app.get("/health", (_req, res) => res.json({ ok: true }));
 
 app.get("/api/config", (_req, res) => {
   res.json({
+    authMode: config.authMode,
     issuer: config.oidcIssuer,
     clientId: config.oidcClientId,
     scope: "openid profile email",
     portalUrl: config.portalUrl
   });
+});
+
+app.post("/api/login", async (req, res) => {
+  if (config.authMode === "oidc") return res.status(404).json({ error: "Login legado desativado" });
+  if (req.body?.password !== config.appPassword) return res.status(401).json({ error: "Senha invalida" });
+  const name = String(req.body?.name || "").trim();
+  if (!name) return res.status(400).json({ error: "Informe o nome do responsavel" });
+  const token = await createLegacyToken(name);
+  res.json({ token, user: { name, source: "legacy" } });
 });
 
 app.use("/api", requireAuth);
@@ -34,7 +44,8 @@ app.get("/api/me", (req, res) => {
       sub: user.sub,
       name: user.name,
       email: user.email,
-      permissions: user.permissions
+      permissions: user.permissions,
+      source: user.source
     }
   });
 });

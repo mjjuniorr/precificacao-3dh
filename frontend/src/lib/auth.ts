@@ -2,6 +2,7 @@ import { UserManager, WebStorageStateStore, type User } from "oidc-client-ts";
 import { API_URL } from "./api";
 
 type AuthConfig = {
+  authMode: "legacy" | "hybrid" | "oidc";
   issuer: string;
   clientId: string;
   scope: string;

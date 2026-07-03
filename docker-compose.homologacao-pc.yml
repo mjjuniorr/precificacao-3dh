@@ -8,7 +8,7 @@ services:
     volumes:
       - precificacao_pgdata:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -22,6 +22,9 @@ services:
       API_PORT: 4000
       DATABASE_URL: postgres://${POSTGRES_USER:-precificacao}:${POSTGRES_PASSWORD:-precificacao_dev}@precificacao-db:5432/${POSTGRES_DB:-precificacao}
       CORS_ORIGIN: "*"
+      AUTH_MODE: ${AUTH_MODE:-hybrid}
+      APP_PASSWORD: ${APP_PASSWORD:-admin}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
       OIDC_ISSUER: ${OIDC_ISSUER:-http://localhost:8080/realms/3dh}
       OIDC_JWKS_URL: ${OIDC_JWKS_URL:-http://host.docker.internal:8080/realms/3dh/protocol/openid-connect/certs}
       OIDC_CLIENT_ID: precificacao-web

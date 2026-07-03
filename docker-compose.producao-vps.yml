@@ -22,12 +22,14 @@ services:
       API_PORT: 4000
       DATABASE_URL: postgres://${POSTGRES_USER:-precificacao}:${POSTGRES_PASSWORD}@precificacao-db:5432/${POSTGRES_DB:-precificacao}
       CORS_ORIGIN: ${CORS_ORIGIN:-https://precificacao.3dhmanaus.com.br}
-      AUTH_MODE: oidc
-      OIDC_ISSUER: ${OIDC_ISSUER:-https://auth.3dhmanaus.shop/realms/3dh}
+      AUTH_MODE: ${AUTH_MODE:-hybrid}
+      APP_PASSWORD: ${APP_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      OIDC_ISSUER: ${OIDC_ISSUER:-https://auth.3dhmanaus.com.br/realms/3dh}
       OIDC_JWKS_URL: ${OIDC_JWKS_URL:-}
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-precificacao-web}
       OIDC_AUDIENCE: ${OIDC_AUDIENCE:-precificacao-web}
-      PORTAL_URL: ${PORTAL_URL:-https://portal.3dhmanaus.shop}
+      PORTAL_URL: ${PORTAL_URL:-https://portal.3dhmanaus.com.br}
     deploy:
       replicas: 1
       restart_policy:

@@ -25,20 +25,23 @@ POSTGRES_USER=precificacao
 POSTGRES_PASSWORD=senha-forte-do-banco
 
 CORS_ORIGIN=https://precificacao.3dhmanaus.com.br
-AUTH_MODE=oidc
-OIDC_ISSUER=https://auth.3dhmanaus.shop/realms/3dh
+AUTH_MODE=hybrid
+APP_PASSWORD=senha-legada-forte
+JWT_SECRET=segredo-longo-para-token-legado
+OIDC_ISSUER=https://auth.3dhmanaus.com.br/realms/3dh
 OIDC_JWKS_URL=
 OIDC_CLIENT_ID=precificacao-web
 OIDC_AUDIENCE=precificacao-web
-PORTAL_URL=https://portal.3dhmanaus.shop
+PORTAL_URL=https://portal.3dhmanaus.com.br
 
 TRAEFIK_ENTRYPOINTS=websecure
 TRAEFIK_CERTRESOLVER=letsencryptresolver
 TRAEFIK_PRIORITY=1
 ```
 
-A aplicacao nao armazena senha local. O login utiliza o cliente publico
-`precificacao-web` do realm `3dh`.
+A senha legada e configurada somente no Portainer e nunca armazenada no Git.
+O login central usa o cliente publico `precificacao-web` do realm `3dh`.
+Mantenha `AUTH_MODE=hybrid` ate concluir os testes de SSO em producao.
 
 ## Criar stack
 

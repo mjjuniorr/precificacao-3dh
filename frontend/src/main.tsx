@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Download, FileUp, History, LogIn, LogOut, RefreshCw, Save, Search, X } from "lucide-react";
-import { ApiError, api, downloadExport, setAccessToken, type ImportBatch, type PricingItem, type SessionUser, type Summary } from "./lib/api";
-import { login, logout, restoreUser } from "./lib/auth";
+import { Download, FileUp, History, Lock, LogIn, LogOut, RefreshCw, Save, Search, X } from "lucide-react";
+import { ApiError, api, clearAccessToken, downloadExport, restoreLegacyToken, setAccessToken, setUnauthorizedHandler, storeLegacyToken, type ImportBatch, type PricingItem, type SessionUser, type Summary } from "./lib/api";
+import { getAuthConfig, login, logout, restoreUser } from "./lib/auth";
 import "./style.css";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -11,36 +11,91 @@ type NumericInput = number | "";
 
 function App() {
   const [session, setSession] = useState<SessionUser | null>(null);
+  const [authMode, setAuthMode] = useState<"legacy" | "hybrid" | "oidc">("hybrid");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const legacyRequested = new URLSearchParams(window.location.search).get("login") === "legacy";
 
   useEffect(() => {
-    restoreUser()
-      .then(async (oidcUser) => {
-        if (!oidcUser || oidcUser.expired) return;
-        setAccessToken(oidcUser.access_token);
-        const result = await api<{ user: SessionUser }>("/api/me");
-        setSession(result.user);
-      })
-      .catch((err) => setError((err as Error).message))
-      .finally(() => setLoading(false));
+    setUnauthorizedHandler(() => {
+      clearAccessToken();
+      setSession(null);
+      setError("Sua sessao expirou. Entre novamente.");
+      setLoading(false);
+    });
+
+    async function start() {
+      try {
+        const config = await getAuthConfig();
+        setAuthMode(config.authMode);
+
+        const legacyToken = restoreLegacyToken();
+        if (legacyToken && config.authMode !== "oidc") {
+          setAccessToken(legacyToken);
+          const result = await api<{ user: SessionUser }>("/api/me");
+          setSession(result.user);
+          return;
+        }
+
+        if (config.authMode !== "legacy" && !legacyRequested) {
+          const oidcUser = await restoreUser();
+          if (oidcUser && !oidcUser.expired) {
+            setAccessToken(oidcUser.access_token);
+            const result = await api<{ user: SessionUser }>("/api/me");
+            setSession(result.user);
+            return;
+          }
+          await login();
+          return;
+        }
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    void start();
   }, []);
+
+  async function legacyLogin(name: string, password: string) {
+    setError("");
+    try {
+      const result = await api<{ token: string; user: { name: string } }>("/api/login", {
+        method: "POST",
+        body: JSON.stringify({ name, password })
+      });
+      storeLegacyToken(result.token);
+      const current = await api<{ user: SessionUser }>("/api/me");
+      setSession(current.user);
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
 
   if (loading) {
     return <main className="login-shell"><RefreshCw className="spin" /> Carregando acesso...</main>;
   }
 
   if (!session) {
+    if (authMode === "legacy" || legacyRequested) {
+      return <LegacyLogin error={error} onSubmit={legacyLogin} showOidc={authMode === "hybrid"} />;
+    }
     return (
       <main className="login-shell">
         <section className="login-panel">
           <div className="brand">3DH</div>
           <h1>Sistema Precificacao</h1>
-          <p>Use sua conta corporativa do Portal 3DH.</p>
+          <p>Nao foi possivel iniciar automaticamente o acesso corporativo.</p>
           {error && <p className="error">{error}</p>}
           <button className="primary" onClick={() => login()}>
             <LogIn size={18} /> Entrar com Portal 3DH
           </button>
+          {authMode === "hybrid" && (
+            <button className="ghost" onClick={() => window.location.assign("/?login=legacy")}>
+              <Lock size={18} /> Usar acesso legado
+            </button>
+          )}
         </section>
       </main>
     );
@@ -59,7 +114,57 @@ function App() {
     );
   }
 
-  return <Workspace session={session} onLogout={() => logout()} />;
+  return <Workspace session={session} onLogout={async () => {
+    if (session.source === "legacy") {
+      clearAccessToken();
+      window.location.assign("/?login=legacy");
+      return;
+    }
+    clearAccessToken();
+    await logout();
+  }} />;
+}
+
+function LegacyLogin({
+  error,
+  onSubmit,
+  showOidc
+}: {
+  error: string;
+  onSubmit: (name: string, password: string) => Promise<void>;
+  showOidc: boolean;
+}) {
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    setSubmitting(true);
+    await onSubmit(name, password);
+    setSubmitting(false);
+  }
+
+  return (
+    <main className="login-shell">
+      <form className="login-panel" onSubmit={submit}>
+        <div className="brand">3DH</div>
+        <h1>Sistema Precificacao</h1>
+        <p>Acesso legado temporario para a fase de transicao.</p>
+        <label>Responsavel<input value={name} onChange={(event) => setName(event.target.value)} required autoFocus /></label>
+        <label>Senha<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
+        {error && <p className="error">{error}</p>}
+        <button className="primary" disabled={submitting}>
+          <Lock size={18} /> {submitting ? "Entrando..." : "Entrar com acesso legado"}
+        </button>
+        {showOidc && (
+          <button className="ghost" type="button" onClick={() => window.location.assign("/")}>
+            <LogIn size={18} /> Entrar com Portal 3DH
+          </button>
+        )}
+      </form>
+    </main>
+  );
 }
 
 function Workspace({ session, onLogout }: { session: SessionUser; onLogout: () => void }) {

@@ -26,6 +26,10 @@ O frontend usa Authorization Code com PKCE e guarda a sessao somente em `session
 
 Importacoes, alteracoes, exportacoes e exclusoes administrativas geram registros de auditoria com o identificador e o nome do usuario.
 
+Durante a transicao, `AUTH_MODE=hybrid` mantém o login central como fluxo
+automatico e disponibiliza o acesso legado explicitamente em `/?login=legacy`.
+Somente apos a validacao completa em producao o modo deve mudar para `oidc`.
+
 ## Producao
 
 A stack segue o padrao da infraestrutura 3DH:
@@ -35,7 +39,7 @@ A stack segue o padrao da infraestrutura 3DH:
 - Traefik com TLS em `precificacao.3dhmanaus.com.br`;
 - imagens GHCR informadas por `APP_IMAGE` e `API_IMAGE`;
 - tags imutaveis baseadas no commit;
-- login central em `https://auth.3dhmanaus.shop/realms/3dh`.
+- login central em `https://auth.3dhmanaus.com.br/realms/3dh`.
 
 Consulte `docs/deploy-portainer.md` para as variaveis e o procedimento completo.
 
